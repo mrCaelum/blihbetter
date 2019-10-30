@@ -37,6 +37,12 @@ def set_user_config(path=DEFAULT_CONFIG_FILE):
     user_config[BLIH_URL_IDENTIFIER] = input('Blih url (' + DEFAULT_BLIH_URL + '): ')
     if not user_config[BLIH_URL_IDENTIFIER]:
         user_config[BLIH_URL_IDENTIFIER] = DEFAULT_BLIH_URL
+    if not os.path.exists(os.path.dirname(path)):
+        try:
+            os.makedirs(os.path.dirname(path))
+        except:
+            print("\033[37;41m ERROR \033[0m Unable to create config file")
+            exit(1)
     try:
         with open(path, 'w') as file:
             json.dump(user_config, file)
