@@ -29,12 +29,16 @@ def set_user_config(path=DEFAULT_CONFIG_FILE):
     print_logo()
     print('\033[1;33mConfig file generation:\033[0;2m \'' + path + '\'\033[0m', end='\n\n')
     user_config = {}
-    user_config[USER_IDENTIFIER] = input('User: ')
-    user_config[TOKEN_IDENTIFIER] = hashlib.sha512(bytes(getpass.getpass(), 'utf8')).hexdigest()
-    user_config[GIT_URL_IDENTIFIER] = input('Git url (' + DEFAULT_GIT_URL + '): ')
+    try:
+        user_config[USER_IDENTIFIER] = input('User: ')
+        user_config[TOKEN_IDENTIFIER] = hashlib.sha512(bytes(getpass.getpass(), 'utf8')).hexdigest()
+        user_config[GIT_URL_IDENTIFIER] = input('Git url (' + DEFAULT_GIT_URL + '): ')
+        user_config[BLIH_URL_IDENTIFIER] = input('Blih url (' + DEFAULT_BLIH_URL + '): ')
+    except:
+        print("\n\n\033[37;44m INFO \033[0m Exited")
+        exit(0)
     if not user_config[GIT_URL_IDENTIFIER]:
         user_config[GIT_URL_IDENTIFIER] = DEFAULT_GIT_URL
-    user_config[BLIH_URL_IDENTIFIER] = input('Blih url (' + DEFAULT_BLIH_URL + '): ')
     if not user_config[BLIH_URL_IDENTIFIER]:
         user_config[BLIH_URL_IDENTIFIER] = DEFAULT_BLIH_URL
     if not os.path.exists(os.path.dirname(path)):
@@ -95,7 +99,7 @@ def get_acl(user_config, repo):
     max_acl_part = int(max_acl_size / 2) * 2 + 6
     print('\033[1;33m' + ('‾' * max_user_part) + '|' + ('‾' * max_acl_part) + '\033[0m')
     for element in infos:
-        print((' ' * int((max_user_part - len(element[0])) / 2)) + element[0] + (' ' * int((max_user_part - len(element[0])) / 2)) + ' \033[1;33m|\033[0m' + (' ' * int((max_acl_part - len(element[1])) / 2)) + element[1] + (' ' * int((max_acl_part - len(element[1])) / 2)))
+        print((' ' * int((max_user_part - len(element[0])) / 2)) + element[0] + (' ' * int((max_user_part - len(element[0])) / 2 - (len(element[0]) % 2 == 0))) + ' \033[1;33m|\033[0m' + (' ' * int((max_acl_part - len(element[1])) / 2)) + element[1])
 
 def set_acl(user_config, repo, acls):
     return os.system(blih_cmd(user_config, 'repository setacl ' + repo + ' ' + acls))
@@ -111,25 +115,45 @@ def clone(user_config, repo):
     return os.system('git clone ' + user_config[GIT_URL_IDENTIFIER] + ':' + user_config[USER_IDENTIFIER] + '/' + repo)
 
 def info(user_config, repo, out=True):
-    infos = json.loads(str(subprocess.check_output(blih_cmd(user_config, 'repository info ' + repo), shell=True), 'utf-8').replace("\'", "\""))
+    try:
+        raw_output = subprocess.check_output(blih_cmd(user_config, 'repository info ' + repo), shell=True)
+    except:
+        print('\033[37;41m ERROR \033[0m Invalid repository \'' + repo + '\'')
+        return
+    infos = json.loads(str(raw_output, 'utf-8').replace("\'", "\""))
     if out:
+        print_logo()
+        print('\033[1;33mNAME:\033[1;37m', repo, '\n')
         if infos['url']:
-            print('Url:', infos['url'])
+            print('\033[1;33m          Url:\033[0m', infos['url'])
         if infos['uuid']:
-            print('UUID:', infos['uuid'])
+            print('\033[1;33m         UUID:\033[0m', infos['uuid'])
         if infos['description']:
-            print('Description:', infos['description'])
+            print('\033[1;33m  Description:\033[0m', infos['description'])
         if infos['public']:
-            print('Public:', infos['public'])
+            print('\033[1;33m       Public:\033[0m', infos['public'])
         if infos['creation_time']:
-            print('Creation date:', datetime.datetime.fromtimestamp(int(infos['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
+            print('\033[1;33mCreation date:\033[0m', datetime.datetime.fromtimestamp(int(infos['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
+        print()
+        get_acl(user_config, repo)
+        print('\n\033[2m© Louis Kleiver (louis.kleiver@epitech.eu)\033[0m')
     return infos
 
 def create(user_config, repo):
-    print('\033[37;44m INFO \033[0m', str(subprocess.check_output(blih_cmd(user_config, 'repository create ' + repo), shell=True), 'utf-8'), end='')
+    try:
+        raw_output = subprocess.check_output(blih_cmd(user_config, 'repository create ' + repo), shell=True)
+    except:
+        print('\033[37;41m ERROR \033[0m Unable to create \'' + repo + '\'')
+        exit(1)
+    print('\033[37;44m INFO \033[0m', str(raw_output, 'utf-8'), end='')
 
 def delete(user_config, repo):
-    print('\033[37;44m INFO \033[0m', str(subprocess.check_output(blih_cmd(user_config, 'repository delete ' + repo), shell=True), 'utf-8'), end='')
+    try:
+        raw_output = subprocess.check_output(blih_cmd(user_config, 'repository delete ' + repo), shell=True)
+    except:
+        print('\033[37;41m ERROR \033[0m Invalid repository \'' + repo + '\'')
+        exit(1)
+    print('\033[37;44m INFO \033[0m', str(raw_output, 'utf-8'), end='')
 
 def usage(cmd=None):
     print_logo()
@@ -206,10 +230,16 @@ if __name__ == "__main__":
             usage('getacl')
         elif sys.argv[1] == 'setacl':
             usage('setacl')
+        elif sys.argv[1] == 'whoami':
+            print_logo()
+            print('\n\033[1;33mHello\033[1;37m', user_config[USER_IDENTIFIER], '\033[0m')
+            print('\033[2mYou can type \'eiota config info\' to get more informations\033[0m\n')
         else:
             usage()
     elif len(sys.argv) == 3:
-        if sys.argv[1] == 'clone':
+        if sys.argv[1] == 'help':
+            usage(sys.argv[2])
+        elif sys.argv[1] == 'clone':
             if sys.argv[2] == 'help':
                 usage('clone')
             else:
