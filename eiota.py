@@ -172,6 +172,7 @@ def usage(cmd=None):
         print('    config            - Setup the config file')
         print('    ls                - Display every user repository')
         print('    new <name>        - Create a new repository')
+        print('    clone <name>      - Clone the repository')
         print('    rm <name>         - Remove the repository')
         print('    info <name>       - Display repository informations')
         print('    acl (get/set)     - Edit the repository ACLs')
