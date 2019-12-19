@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3.3
 
 import os
 import sys
@@ -136,7 +136,7 @@ def info(user_config, repo, out=True):
             print('\033[1;33mCreation date:\033[0m', datetime.datetime.fromtimestamp(int(infos['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
         print()
         get_acl(user_config, repo)
-        print('\n\033[2m© Louis Kleiver (louis.kleiver@epitech.eu)\033[0m')
+        print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
     return infos
 
 def create(user_config, repo):
@@ -200,7 +200,7 @@ def usage(cmd=None):
         print('    rm <name>         - Remove the repository')
         print('    info <name>       - Display repository informations')
         print('    acl (get/set)     - Edit the repository ACLs')
-    print('\n\033[2m© Louis Kleiver (louis.kleiver@epitech.eu)\033[0m')
+    print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
