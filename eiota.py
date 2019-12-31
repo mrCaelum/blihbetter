@@ -11,7 +11,7 @@ import urllib.parse
 import getpass
 import datetime
 
-EIOTA_VERSION = '2.0.0'
+EIOTA_VERSION = '2.1.0'
 USER_IDENTIFIER = 'user'
 TOKEN_IDENTIFIER = 'token'
 GIT_URL_IDENTIFIER = 'git_url'
@@ -187,6 +187,30 @@ def delete(user_config, repo):
     status, reason, headers, data = blih_request(user_config, '/repository/' + repo, method='DELETE')
     print('\033[37;44m INFO \033[0m', data['message'])
 
+def sshkey_list(user_config):
+    status, reason, headers, data = blih_request(user_config, '/sshkeys', method='GET')
+    print()
+    for i in data.keys():
+        print ('\033[1;33m' + i + '\033[0m')
+        print(data[i], end='\n\n')
+
+def sshkey_upload(user_config, filename):
+    try:
+        file = open(filename, 'r')
+    except:
+        print("\033[37;41m ERROR \033[0m Can't open file : " + filename)
+        sys.exit(1)
+    data = {
+        'sshkey' : urllib.parse.quote(file.read().strip('\n'))
+    }
+    file.close()
+    status, reason, headers, data = blih_request(user_config, '/sshkeys', method='POST', data=data)
+    print('\033[37;44m INFO \033[0m', data['message'])
+
+def sshkey_remove(user_config, sshkey):
+    status, reason, headers, data = blih_request(user_config, '/sshkey/' + sshkey, method='DELETE')
+    print('\033[37;44m INFO \033[0m', data['message'])
+
 def ping(user_config, to='blih'):
     if to == "blih":
         status, reason, headers, data = blih_request(user_config, '/whoami', method='GET')
@@ -236,19 +260,26 @@ def usage(cmd=None):
     elif cmd == 'info':
         print('\033[1;33mUSAGE:\033[0m eiota info <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Display repository informations.')
+    elif cmd == 'sshkey':
+        print('\033[1;33mUSAGE:\033[0m eiota ' + cmd + ' [command] arguments...', end='\n\n')
+        print('\033[1;33mCOMMANDS:\033[0m')
+        print('    list               - List ssh keys')
+        print('    upload <filename>  - Upload ssh key from a file')
+        print('    rm <key name>      - Set repository ACLs')
     else:
         print('\033[0;32mv' + EIOTA_VERSION + '\033[0m', end='\n\n')
         print('\033[1;33mUSAGE:\033[0m eiota [command] arguments...', end='\n\n')
         print('\033[1;33mCOMMANDS:\033[0m')
-        print('    help              - Display this help message')
-        print('    config            - Setup the config file')
-        print('    ping              - Ask to blih who you are')
-        print('    ls                - Display every user repository')
-        print('    new <name>        - Create a new repository')
-        print('    clone <name>      - Clone the repository')
-        print('    rm <name>         - Remove the repository')
-        print('    info <name>       - Display repository informations')
-        print('    acl (get/set)     - Edit the repository ACLs')
+        print('    help               - Display this help message')
+        print('    config             - Setup the config file')
+        print('    ping               - Ask to blih who you are')
+        print('    ls                 - Display every user repository')
+        print('    new <name>         - Create a new repository')
+        print('    clone <name>       - Clone the repository')
+        print('    rm <name>          - Remove the repository')
+        print('    info <name>        - Display repository informations')
+        print('    acl (get/set)      - Edit the repository ACLs')
+        print('    sshkey (add/ls/rm) - Edit the repository ACLs')
         print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
 
 if __name__ == "__main__":
@@ -282,7 +313,7 @@ if __name__ == "__main__":
         elif sys.argv[1] == 'whoami':
             print_logo()
             print('\n\033[1;33mHello\033[1;37m', user_config[USER_IDENTIFIER], '\033[0m')
-            print('\033[2mYou can type \'eiota config info\' to get more informations\033[0m\n')
+            print('\033[2mYou can type \'eiota config info\' to get more informations\033[0m')
         else:
             usage()
     elif len(sys.argv) == 3:
@@ -295,6 +326,8 @@ if __name__ == "__main__":
                 usage('clone')
             else:
                 clone(user_config, sys.argv[2])
+        elif sys.argv[1] == 'sshkey' and (sys.argv[2] == 'ls' or sys.argv[2] == 'list'):
+            sshkey_list(user_config)
         elif (sys.argv[1] == 'ls' or sys.argv[1] == 'list') and sys.argv[2] == 'help':
             usage('ls')
         elif sys.argv[1] == 'new' or sys.argv[1] == 'create':
@@ -336,6 +369,10 @@ if __name__ == "__main__":
             get_acl(user_config, sys.argv[3])
         elif sys.argv[1] == 'setacl':
             set_acl(user_config, sys.argv[2], sys.argv[3])
+        elif sys.argv[1] == 'sshkey' and (sys.argv[2] == 'add' or sys.argv[2] == 'upload'):
+            sshkey_upload(user_config, sys.argv[3])
+        elif sys.argv[1] == 'sshkey' and (sys.argv[2] == 'rm' or sys.argv[2] == 'remove' or sys.argv[2] == 'delete'):
+            sshkey_remove(user_config, sys.argv[3])
         else:
             usage()
     elif len(sys.argv) == 5:
