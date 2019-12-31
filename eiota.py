@@ -155,21 +155,22 @@ def clone(user_config, repo):
 
 def info(user_config, repo, out=True):
     status, reason, headers, data = blih_request(user_config, '/repository/' + repo, method='GET')
-    print_logo()
-    print('\033[1;33mNAME:\033[1;37m', repo, '\n')
-    if data['message']['url']:
-        print('\033[1;33m          Url:\033[0m', data['message']['url'])
-    if data['message']['uuid']:
-        print('\033[1;33m         UUID:\033[0m', data['message']['uuid'])
-    if data['message']['description']:
-        print('\033[1;33m  Description:\033[0m', data['message']['description'])
-    if data['message']['public']:
-        print('\033[1;33m       Public:\033[0m', data['message']['public'])
-    if data['message']['creation_time']:
-        print('\033[1;33mCreation date:\033[0m', datetime.datetime.fromtimestamp(int(data['message']['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
-    print()
-    get_acl(user_config, repo)
-    print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
+    if out:
+        print_logo()
+        print('\033[1;33mNAME:\033[1;37m', repo, '\n')
+        if data['message']['url']:
+            print('\033[1;33m          Url:\033[0m', data['message']['url'])
+        if data['message']['uuid']:
+            print('\033[1;33m         UUID:\033[0m', data['message']['uuid'])
+        if data['message']['description']:
+            print('\033[1;33m  Description:\033[0m', data['message']['description'])
+        if data['message']['public']:
+            print('\033[1;33m       Public:\033[0m', data['message']['public'])
+        if data['message']['creation_time']:
+            print('\033[1;33mCreation date:\033[0m', datetime.datetime.fromtimestamp(int(data['message']['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
+        print()
+        get_acl(user_config, repo)
+        print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
     return data['message']
 
 def create(user_config, repo, description=None):
@@ -185,6 +186,21 @@ def create(user_config, repo, description=None):
 def delete(user_config, repo):
     status, reason, headers, data = blih_request(user_config, '/repository/' + repo, method='DELETE')
     print('\033[37;44m INFO \033[0m', data['message'])
+
+def ping(user_config, to='blih'):
+    if to == "blih":
+        status, reason, headers, data = blih_request(user_config, '/whoami', method='GET')
+        print_logo()
+        print('\033[37;42m OK \033[0m Successfuly connected to\033[1m', user_config[BLIH_URL_IDENTIFIER], '\033[0mas\033[1m', data['message'], '\033[0m')
+    elif to == "git":
+        cmd = subprocess.run(["ssh", user_config[GIT_URL_IDENTIFIER]], check=False, stdout=subprocess.PIPE)
+        if cmd.returncode == 128:
+            print('\033[37;42m OK \033[0m Successfuly connected to\033[1m', user_config[GIT_URL_IDENTIFIER], '\033[0mas\033[1m', cmd.stdout.decode('utf-8').split(' ')[1].split('!')[0], '\033[0m')
+        else:
+            print('\033[37;41m ERROR \033[0m Unable to connect (check your ssh key)')
+    else:
+        print('\033[37;41m ERROR \033[0m Invalid target', to)
+        sys.exit(1)
 
 def usage(cmd=None):
     print_logo()
@@ -226,6 +242,7 @@ def usage(cmd=None):
         print('\033[1;33mCOMMANDS:\033[0m')
         print('    help              - Display this help message')
         print('    config            - Setup the config file')
+        print('    ping              - Ask to blih who you are')
         print('    ls                - Display every user repository')
         print('    new <name>        - Create a new repository')
         print('    clone <name>      - Clone the repository')
@@ -246,6 +263,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         if sys.argv[1] == 'help':
             usage()
+        elif sys.argv[1] == 'ping':
+            ping(user_config)
         elif sys.argv[1] == 'clone':
             usage('clone')
         elif sys.argv[1] == 'new' or sys.argv[1] == 'create':
@@ -269,6 +288,8 @@ if __name__ == "__main__":
     elif len(sys.argv) == 3:
         if sys.argv[1] == 'help':
             usage(sys.argv[2])
+        elif sys.argv[1] == 'ping':
+            ping(user_config, to=sys.argv[2])
         elif sys.argv[1] == 'clone':
             if sys.argv[2] == 'help':
                 usage('clone')
