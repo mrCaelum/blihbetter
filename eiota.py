@@ -1,20 +1,26 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python
 
 import os
 import sys
 import subprocess
 import json
+import hmac
 import hashlib
+import urllib.request
+import urllib.parse
 import getpass
 import datetime
 
+EIOTA_VERSION = '2.0.0'
 USER_IDENTIFIER = 'user'
 TOKEN_IDENTIFIER = 'token'
 GIT_URL_IDENTIFIER = 'git_url'
 BLIH_URL_IDENTIFIER = 'blih_url'
+USER_AGENT_IDENTIFIER = 'blih_user_agent'
 DEFAULT_CONFIG_FILE = os.path.expanduser("~") + "/.config/epitech/config.json"
 DEFAULT_GIT_URL = "git@git.epitech.eu"
 DEFAULT_BLIH_URL = "https://blih.epitech.eu/"
+DEFAULT_USER_AGENT = 'blih-1.7-win'
 
 def print_logo():
     print('\033[1;36m')
@@ -25,6 +31,39 @@ def print_logo():
     print(' \___/___/\____/ /_/ /_/  |_| ')
     print('\033[0m')
 
+def sign_data(user_config, data=None):
+    signature = hmac.new(bytes(user_config[TOKEN_IDENTIFIER], 'utf8'), msg=bytes(user_config[USER_IDENTIFIER], 'utf8'), digestmod=hashlib.sha512)
+    if data:
+        signature.update(bytes(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')), 'utf8'))
+    signed_data = {'user' : user_config[USER_IDENTIFIER], 'signature' : signature.hexdigest()}
+    if data != None:
+        signed_data['data'] = data
+    return signed_data
+
+def blih_request(user_config, resource, method='GET', content_type='application/json', data=None, url=None):
+    signed_data = sign_data(user_config, data)
+    if url:
+        req = urllib.request.Request(url=url, method=method, data=bytes(json.dumps(signed_data), 'utf8'))
+    else:
+        req = urllib.request.Request(url=user_config[BLIH_URL_IDENTIFIER] + resource, method=method, data=bytes(json.dumps(signed_data), 'utf8'))
+    req.add_header('Content-Type', content_type)
+    req.add_header('User-Agent', user_config[USER_AGENT_IDENTIFIER])
+    try:
+        f = urllib.request.urlopen(req)
+    except urllib.error.HTTPError as e:
+        data = json.loads(e.read().decode('utf8'))
+        print("\033[37;41m ERROR \033[0m HTTP Error", str(e.code), ":", data['error'])
+        sys.exit(e.code)
+    if f.status == 200:
+        try:
+            data = json.loads(f.read().decode('utf8'))
+        except:
+            print("\033[37;41m ERROR \033[0m Can't decode data, aborting")
+            sys.exit(1)
+        return (f.status, f.reason, f.info(), data)
+    print('\033[37;41m ERROR \033[0m Unknown error')
+    sys.exit(1)
+
 def set_user_config(path=DEFAULT_CONFIG_FILE):
     print_logo()
     print('\033[1;33mConfig file generation:\033[0;2m \'' + path + '\'\033[0m', end='\n\n')
@@ -34,6 +73,7 @@ def set_user_config(path=DEFAULT_CONFIG_FILE):
         user_config[TOKEN_IDENTIFIER] = hashlib.sha512(bytes(getpass.getpass(), 'utf8')).hexdigest()
         user_config[GIT_URL_IDENTIFIER] = input('Git url (' + DEFAULT_GIT_URL + '): ')
         user_config[BLIH_URL_IDENTIFIER] = input('Blih url (' + DEFAULT_BLIH_URL + '): ')
+        user_config[USER_AGENT_IDENTIFIER] = input('Blih url (' + DEFAULT_USER_AGENT + '): ')
     except:
         print("\n\n\033[37;44m INFO \033[0m Exited")
         exit(0)
@@ -41,6 +81,8 @@ def set_user_config(path=DEFAULT_CONFIG_FILE):
         user_config[GIT_URL_IDENTIFIER] = DEFAULT_GIT_URL
     if not user_config[BLIH_URL_IDENTIFIER]:
         user_config[BLIH_URL_IDENTIFIER] = DEFAULT_BLIH_URL
+    if not user_config[USER_AGENT_IDENTIFIER]:
+        user_config[USER_AGENT_IDENTIFIER] = DEFAULT_USER_AGENT
     if not os.path.exists(os.path.dirname(path)):
         try:
             os.makedirs(os.path.dirname(path))
@@ -59,7 +101,7 @@ def get_user_config(path=DEFAULT_CONFIG_FILE):
     try:
         with open(path, 'r') as file:
             user_config = json.load(file)
-            if user_config[USER_IDENTIFIER] and user_config[TOKEN_IDENTIFIER] and user_config[GIT_URL_IDENTIFIER] and user_config[BLIH_URL_IDENTIFIER]:
+            if user_config[USER_IDENTIFIER] and user_config[TOKEN_IDENTIFIER] and user_config[GIT_URL_IDENTIFIER] and user_config[BLIH_URL_IDENTIFIER] and user_config[USER_AGENT_IDENTIFIER]:
                 return user_config
     except:
         pass
@@ -71,89 +113,78 @@ def user_config_info(user_config):
     print_logo()
     print('\033[1;33mCONFIGURATION:\033[0m', end='\n\n')
     print('User:            ', user_config[USER_IDENTIFIER])
-    print('Token registered:', 'Yes' if user_config[USER_IDENTIFIER] else 'No')
+    print('Token registered:', 'Yes' if user_config[TOKEN_IDENTIFIER] else 'No')
     print('Git URL:         ', user_config[GIT_URL_IDENTIFIER])
-    print('Blih URL:        ', user_config[BLIH_URL_IDENTIFIER], end='\n\n')
-
-def blih_cmd(user_config, cmd):
-    return 'blih -u ' + user_config[USER_IDENTIFIER] + ' -t ' + user_config[TOKEN_IDENTIFIER] + ' ' + cmd
+    print('Blih URL:        ', user_config[BLIH_URL_IDENTIFIER])
+    if (user_config[USER_AGENT_IDENTIFIER]):
+        print('Blih user agent: ', user_config[USER_AGENT_IDENTIFIER])
+    print()
 
 def get_acl(user_config, repo):
-    try:
-        infos = str(subprocess.check_output(blih_cmd(user_config, 'repository getacl ' + repo), shell=True), 'utf-8')
-    except:
-        print('\033[37;44m INFO \033[0m Invalid repository or no ACLs')
-        return
-    infos = infos.split('\n')
-    infos.pop()
+    status, reason, headers, data = blih_request(user_config, '/repository/' + repo + '/acls', method='GET')
     max_user_size = 0
     max_acl_size = 0
-    for i in range(len(infos)):
-        infos[i] = infos[i].split(':')
-        if (len(infos[i][0]) > max_user_size):
-            max_user_size = len(infos[i][0])
-        if (len(infos[i][1]) > max_acl_size):
-            max_acl_size = len(infos[i][1])
+    for i in data.keys():
+        if (len(i) > max_user_size):
+            max_user_size = len(i)
+        if (len(data[i]) > max_acl_size):
+            max_acl_size = len(data[i])
     print((' ' * int(max_user_size / 2)) + ' \033[1;36mUSER\033[0m ' + (' ' * int(max_user_size / 2)) + '\033[1;33m|\033[0m' + (' ' * int(max_acl_size / 2)) + ' \033[1;36mACLs\033[0m ' + (' ' * int(max_acl_size / 2)))
     max_user_part = int(max_user_size / 2) * 2 + 6
     max_acl_part = int(max_acl_size / 2) * 2 + 6
     print('\033[1;33m' + ('‾' * max_user_part) + '|' + ('‾' * max_acl_part) + '\033[0m')
-    for element in infos:
-        print((' ' * int((max_user_part - len(element[0])) / 2)) + element[0] + (' ' * int((max_user_part - len(element[0])) / 2 - (len(element[0]) % 2 == 0))) + ' \033[1;33m|\033[0m' + (' ' * int((max_acl_part - len(element[1])) / 2)) + element[1])
+    for i in data.keys():
+        print((' ' * int((max_user_part - len(i)) / 2)) + i + (' ' * int((max_user_part - len(i)) / 2 - (len(i) % 2 == 0))) + ' \033[1;33m|\033[0m' + (' ' * int((max_acl_part - len(data[i])) / 2)) + data[i])
 
-def set_acl(user_config, repo, acls):
-    return os.system(blih_cmd(user_config, 'repository setacl ' + repo + ' ' + acls))
+def set_acl(user_config, repo, user, acls=''):
+    data = {
+        'user' : user,
+        'acl' : acls
+    }
+    status, reason, headers, data = blih_request(user_config, '/repository/' + repo + '/acls', method='POST', data=data)
+    print('\033[37;44m INFO \033[0m', data['message'])
 
 def ls(user_config, opt=None):
-    repo_list = str(subprocess.check_output(blih_cmd(user_config, 'repository list'), shell=True), 'utf-8')
-    repo_list = repo_list[:-1].split('\n')
-    for repo in repo_list:
-        print(repo)
+    status, reason, headers, data = blih_request(user_config, '/repositories', method='GET')
+    for repository in data['repositories']:
+        print(repository)
 
 def clone(user_config, repo):
     print('Cloning from \'' + user_config[GIT_URL_IDENTIFIER] + ':' + user_config[USER_IDENTIFIER] + '\'')
     return os.system('git clone ' + user_config[GIT_URL_IDENTIFIER] + ':' + user_config[USER_IDENTIFIER] + '/' + repo)
 
 def info(user_config, repo, out=True):
-    try:
-        raw_output = subprocess.check_output(blih_cmd(user_config, 'repository info ' + repo), shell=True)
-    except:
-        print('\033[37;41m ERROR \033[0m Invalid repository \'' + repo + '\'')
-        return
-    infos = json.loads(str(raw_output, 'utf-8').replace("\'", "\""))
-    if out:
-        print_logo()
-        print('\033[1;33mNAME:\033[1;37m', repo, '\n')
-        if infos['url']:
-            print('\033[1;33m          Url:\033[0m', infos['url'])
-        if infos['uuid']:
-            print('\033[1;33m         UUID:\033[0m', infos['uuid'])
-        if infos['description']:
-            print('\033[1;33m  Description:\033[0m', infos['description'])
-        if infos['public']:
-            print('\033[1;33m       Public:\033[0m', infos['public'])
-        if infos['creation_time']:
-            print('\033[1;33mCreation date:\033[0m', datetime.datetime.fromtimestamp(int(infos['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
-        print()
-        get_acl(user_config, repo)
-        print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
-    return infos
+    status, reason, headers, data = blih_request(user_config, '/repository/' + repo, method='GET')
+    print_logo()
+    print('\033[1;33mNAME:\033[1;37m', repo, '\n')
+    if data['message']['url']:
+        print('\033[1;33m          Url:\033[0m', data['message']['url'])
+    if data['message']['uuid']:
+        print('\033[1;33m         UUID:\033[0m', data['message']['uuid'])
+    if data['message']['description']:
+        print('\033[1;33m  Description:\033[0m', data['message']['description'])
+    if data['message']['public']:
+        print('\033[1;33m       Public:\033[0m', data['message']['public'])
+    if data['message']['creation_time']:
+        print('\033[1;33mCreation date:\033[0m', datetime.datetime.fromtimestamp(int(data['message']['creation_time'])).strftime('%Y-%m-%d %H:%M:%S'))
+    print()
+    get_acl(user_config, repo)
+    print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
+    return data['message']
 
-def create(user_config, repo):
-    try:
-        raw_output = subprocess.check_output(blih_cmd(user_config, 'repository create ' + repo), shell=True)
-    except:
-        print('\033[37;41m ERROR \033[0m Unable to create \'' + repo + '\'')
-        exit(1)
-    print('\033[37;44m INFO \033[0m', str(raw_output, 'utf-8'), end='')
+def create(user_config, repo, description=None):
+    data = {
+        'name' : repo,
+        'type' : 'git'
+    }
+    if description:
+        data['description'] = description
+    status, reason, headers, data = blih_request(user_config, '/repositories', method='POST', data=data)
+    print('\033[37;44m INFO \033[0m', data['message'])
 
 def delete(user_config, repo):
-    try:
-        raw_output = subprocess.check_output(blih_cmd(user_config, 'repository delete ' + repo), shell=True)
-    except:
-        print('\033[37;41m ERROR \033[0m Invalid repository \'' + repo + '\'')
-        exit(1)
-    print('\033[37;44m INFO \033[0m', str(raw_output, 'utf-8'), end='')
+    status, reason, headers, data = blih_request(user_config, '/repository/' + repo, method='DELETE')
+    print('\033[37;44m INFO \033[0m', data['message'])
 
 def usage(cmd=None):
     print_logo()
@@ -163,10 +194,10 @@ def usage(cmd=None):
         print('    get <repo> <acl>  - Get repository ACLs')
         print('    set <repo> <acl>  - Set repository ACLs')
     elif cmd == 'getacl':
-        print('\033[1;33mUSAGE:\033[0m eiota get acl <repo> <acl>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m eiota get acl <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Get the repository ACLs')
     elif cmd == 'setacl':
-        print('\033[1;33mUSAGE:\033[0m eiota set acl <repo> <acl>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m eiota set acl <repo> <user> <acl>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Set the repository ACLs')
     elif cmd == 'config':
         print('\033[1;33mUSAGE:\033[0m eiota config (<output file>/info)', end='\n\n')
@@ -190,6 +221,7 @@ def usage(cmd=None):
         print('\033[1;33mUSAGE:\033[0m eiota info <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Display repository informations.')
     else:
+        print('\033[0;32mv' + EIOTA_VERSION + '\033[0m', end='\n\n')
         print('\033[1;33mUSAGE:\033[0m eiota [command] arguments...', end='\n\n')
         print('\033[1;33mCOMMANDS:\033[0m')
         print('    help              - Display this help message')
@@ -200,7 +232,7 @@ def usage(cmd=None):
         print('    rm <name>         - Remove the repository')
         print('    info <name>       - Display repository informations')
         print('    acl (get/set)     - Edit the repository ACLs')
-    print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
+        print('\n\033[2m© Louis Kleiver (louis.kleiver@gmail.com)\033[0m')
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
@@ -226,10 +258,8 @@ if __name__ == "__main__":
             ls(user_config)
         elif sys.argv[1] == 'config':
             set_user_config()
-        elif sys.argv[1] == 'getacl':
-            usage('getacl')
-        elif sys.argv[1] == 'setacl':
-            usage('setacl')
+        elif sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights'):
+            usage('acl')
         elif sys.argv[1] == 'whoami':
             print_logo()
             print('\n\033[1;33mHello\033[1;37m', user_config[USER_IDENTIFIER], '\033[0m')
@@ -276,18 +306,27 @@ if __name__ == "__main__":
             usage('getacl')
         elif (sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'set') or (sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'set'):
             usage('setacl')
-        elif sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights'):
-            get_acl(user_config ,sys.argv[2])
+        elif sys.argv[1] == 'getacl':
+            get_acl(user_config, sys.argv[2])
         else:
             usage()
     elif len(sys.argv) == 4:
-        if ((sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'get') or sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'get'):
+        if (sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'get') or (sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'get'):
             get_acl(user_config, sys.argv[3])
+        elif sys.argv[1] == 'setacl':
+            set_acl(user_config, sys.argv[2], sys.argv[3])
         else:
             usage()
     elif len(sys.argv) == 5:
-        if ((sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'set') or sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'set'):
+        if (sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'set') or (sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'set'):
             set_acl(user_config, sys.argv[3], sys.argv[4])
+        elif sys.argv[1] == 'setacl':
+            set_acl(user_config, sys.argv[2], sys.argv[3], sys.argv[4])
+        else:
+            usage()
+    elif len(sys.argv) == 6:
+        if (sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'set') or (sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'set'):
+            set_acl(user_config, sys.argv[3], sys.argv[4], sys.argv[5])
         else:
             usage()
     else:
