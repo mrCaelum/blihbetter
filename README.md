@@ -8,9 +8,23 @@ A simple python script to simplify BLIH usage for Epitech students.
 
 ### Archlinux
 
-###### You can use the AUR to install eIOTA:
+###### You can install [eiota](https://aur.archlinux.org/packages/eiota/) from the [AUR](https://aur.archlinux.org/):
 ```
 yay -S eiota
+```
+
+### Others
+
+###### The install script will copy eiota in `~/.local/bin`
+```
+chmod +x install.sh
+./install.sh
+```
+
+###### You can also run it as root to copy eiota in `/usr/bin`
+```
+chmod +x install.sh
+sudo ./install.sh
 ```
 
 ## Usage
