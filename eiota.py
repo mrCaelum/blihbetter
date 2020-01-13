@@ -11,7 +11,7 @@ import urllib.parse
 import getpass
 import datetime
 
-EIOTA_VERSION = '2.1.1'
+EIOTA_VERSION = '2.2.0'
 USER_IDENTIFIER = 'user'
 TOKEN_IDENTIFIER = 'token'
 GIT_URL_IDENTIFIER = 'git_url'
@@ -251,9 +251,12 @@ def usage(cmd=None):
     elif cmd == 'ls':
         print('\033[1;33mUSAGE:\033[0m eiota ls', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m List every repository of the user.')
+    elif cmd == 'create':
+        print('\033[1;33mUSAGE:\033[0m eiota create <repo>', end='\n\n')
+        print('\033[1;33mDESCRIPTION:\033[0m Create a new repository <repo>.')
     elif cmd == 'new':
         print('\033[1;33mUSAGE:\033[0m eiota new <repo>', end='\n\n')
-        print('\033[1;33mDESCRIPTION:\033[0m Create a new repository created <repo>.')
+        print('\033[1;33mDESCRIPTION:\033[0m Create a new repository <repo> with the default Epitech configuration.')
     elif cmd == 'rm':
         print('\033[1;33mUSAGE:\033[0m eiota rm <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Remove a repository <repo>.')
@@ -274,7 +277,8 @@ def usage(cmd=None):
         print('    config             - Setup the config file')
         print('    ping               - Ask to blih who you are')
         print('    ls                 - Display every user repository')
-        print('    new <name>         - Create a new repository')
+        print('    create <name>      - Create a new repository')
+        print('    new <name>         - Create a new repository with default Epitech config')
         print('    clone <name>       - Clone the repository')
         print('    rm <name>          - Remove the repository')
         print('    info <name>        - Display repository informations')
@@ -296,14 +300,10 @@ if __name__ == "__main__":
             usage()
         elif sys.argv[1] == 'ping':
             ping(user_config)
-        elif sys.argv[1] == 'clone':
-            usage('clone')
-        elif sys.argv[1] == 'new' or sys.argv[1] == 'create':
-            usage('new')
-        elif sys.argv[1] == 'new' or sys.argv[1] == 'create' or sys.argv[1] == 'delete':
+        elif sys.argv[1] == 'clone' or sys.argv[1] == 'new' or sys.argv[1] == 'create' or sys.argv[1] == 'info':
+            usage(sys.argv[1])
+        elif sys.argv[1] == 'rm' or sys.argv[1] == 'delete' or sys.argv[1] == 'remove':
             usage('rm')
-        elif sys.argv[1] == 'info':
-            usage('info')
         elif sys.argv[1] == 'ls' or sys.argv[1] == 'list':
             ls(user_config)
         elif sys.argv[1] == 'config':
@@ -330,11 +330,17 @@ if __name__ == "__main__":
             sshkey_list(user_config)
         elif (sys.argv[1] == 'ls' or sys.argv[1] == 'list') and sys.argv[2] == 'help':
             usage('ls')
-        elif sys.argv[1] == 'new' or sys.argv[1] == 'create':
+        elif sys.argv[1] == 'create':
+            if sys.argv[2] == 'help':
+                usage('create')
+            else:
+                create(user_config, sys.argv[2])
+        elif sys.argv[1] == 'new':
             if sys.argv[2] == 'help':
                 usage('new')
             else:
                 create(user_config, sys.argv[2])
+                set_acl(user_config, sys.argv[2], 'ramassage-tek', 'r')
         elif sys.argv[1] == 'rm' or sys.argv[1] == 'delete' or sys.argv[1] == 'remove':
             if sys.argv[2] == 'help':
                 usage('rm')
@@ -352,9 +358,9 @@ if __name__ == "__main__":
                 user_config_info(user_config)
             else:
                 set_user_config(sys.argv[2])
-        elif sys.argv[1] == 'getacl' or sys.argv[2] == 'help':
-            usage('getacl')
-        elif sys.argv[1] == 'setacl' or sys.argv[2] == 'help':
+        elif sys.argv[1] == 'getacl':
+            get_acl(user_config, sys.argv[2])
+        elif sys.argv[1] == 'setacl' and sys.argv[2] == 'help':
             usage('setacl')
         elif (sys.argv[1] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[2] == 'get') or (sys.argv[2] in ('acl', 'ACL', 'acls', 'ACLs', 'rights') and sys.argv[1] == 'get'):
             usage('getacl')
