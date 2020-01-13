@@ -11,7 +11,7 @@ import urllib.parse
 import getpass
 import datetime
 
-EIOTA_VERSION = '2.2.0'
+EIOTA_VERSION = '2.2.1'
 USER_IDENTIFIER = 'user'
 TOKEN_IDENTIFIER = 'token'
 GIT_URL_IDENTIFIER = 'git_url'
