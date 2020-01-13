@@ -38,7 +38,8 @@ eiota [command] arguments...
 - `config`              - Setup the config file
 - `ping`               - Ask to blih who you are
 - `ls`                 - Display every user repository
-- `new <name>`         - Create a new repository
+- `create <name>`      - Create a new repository
+- `new <name>`         - Create a new repository with default Epitech config
 - `clone <name>`       - Clone the repository
 - `rm <name>`          - Remove the repository
 - `info <name>`        - Display repository informations
