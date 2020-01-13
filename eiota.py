@@ -11,7 +11,7 @@ import urllib.parse
 import getpass
 import datetime
 
-EIOTA_VERSION = '2.1.0'
+EIOTA_VERSION = '2.1.1'
 USER_IDENTIFIER = 'user'
 TOKEN_IDENTIFIER = 'token'
 GIT_URL_IDENTIFIER = 'git_url'
@@ -73,7 +73,7 @@ def set_user_config(path=DEFAULT_CONFIG_FILE):
         user_config[TOKEN_IDENTIFIER] = hashlib.sha512(bytes(getpass.getpass(), 'utf8')).hexdigest()
         user_config[GIT_URL_IDENTIFIER] = input('Git url (' + DEFAULT_GIT_URL + '): ')
         user_config[BLIH_URL_IDENTIFIER] = input('Blih url (' + DEFAULT_BLIH_URL + '): ')
-        user_config[USER_AGENT_IDENTIFIER] = input('Blih url (' + DEFAULT_USER_AGENT + '): ')
+        user_config[USER_AGENT_IDENTIFIER] = input('Blih user agent (' + DEFAULT_USER_AGENT + '): ')
     except:
         print("\n\n\033[37;44m INFO \033[0m Exited")
         exit(0)
