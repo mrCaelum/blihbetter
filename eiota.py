@@ -341,6 +341,7 @@ if __name__ == "__main__":
             else:
                 create(user_config, sys.argv[2])
                 set_acl(user_config, sys.argv[2], 'ramassage-tek', 'r')
+                clone(user_config, sys.argv[2])
         elif sys.argv[1] == 'rm' or sys.argv[1] == 'delete' or sys.argv[1] == 'remove':
             if sys.argv[2] == 'help':
                 usage('rm')
