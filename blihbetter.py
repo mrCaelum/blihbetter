@@ -11,7 +11,7 @@ import urllib.parse
 import getpass
 import datetime
 
-EIOTA_VERSION = '2.2.1'
+BLIHBETTER_VERSION = '2.2.1'
 USER_IDENTIFIER = 'user'
 TOKEN_IDENTIFIER = 'token'
 GIT_URL_IDENTIFIER = 'git_url'
@@ -24,11 +24,10 @@ DEFAULT_USER_AGENT = 'blih-1.7-win'
 
 def print_logo():
     print('\033[1;36m')
-    print('         ________  _________  ')
-    print('   ___  /  _/ __ \/_  __/   | ')
-    print('  / _ \ / // / / / / / / /| | ')
-    print(' /  __// // /_/ / / / / ___ | ')
-    print(' \___/___/\____/ /_/ /_/  |_| ')
+    print('   ___  ___ __     ___      __  __         ')
+    print('  / _ )/ (_) /    / _ )___ / /_/ /____ ____')
+    print(' / _  / / / _ \  / _  / -_) __/ __/ -_) __/')
+    print('/____/_/_/_//_/ /____/\__/\__/\__/\__/_/   ')
     print('\033[0m')
 
 def sign_data(user_config, data=None):
@@ -106,7 +105,7 @@ def get_user_config(path=DEFAULT_CONFIG_FILE):
     except:
         pass
     print('\033[37;41m ERROR \033[0m Invalid config file \'' + path + '\'')
-    print('> \'eiota config\' to create a valid config file.')
+    print('> \'blihbetter config\' to create a valid config file.')
     exit(1)
 
 def user_config_info(user_config):
@@ -229,49 +228,49 @@ def ping(user_config, to='blih'):
 def usage(cmd=None):
     print_logo()
     if cmd in ('acl', 'ACL', 'acls', 'ACLs', 'rights'):
-        print('\033[1;33mUSAGE:\033[0m eiota ' + cmd + ' [command] arguments...', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter ' + cmd + ' [command] arguments...', end='\n\n')
         print('\033[1;33mCOMMANDS:\033[0m')
         print('    get <repo> <acl>  - Get repository ACLs')
         print('    set <repo> <acl>  - Set repository ACLs')
     elif cmd == 'getacl':
-        print('\033[1;33mUSAGE:\033[0m eiota get acl <repo>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter get acl <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Get the repository ACLs')
     elif cmd == 'setacl':
-        print('\033[1;33mUSAGE:\033[0m eiota set acl <repo> <user> <acl>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter set acl <repo> <user> <acl>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Set the repository ACLs')
     elif cmd == 'config':
-        print('\033[1;33mUSAGE:\033[0m eiota config (<output file>/info)', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter config (<output file>/info)', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m')
         print('    info:           - Display actual configuration.')
         print('    <output file>:  - Create a config in the <output file>.')
         print('                      The <output file> is \033[2m\'' + DEFAULT_CONFIG_FILE + '\'\033[0m by default.')
     elif cmd == 'clone':
-        print('\033[1;33mUSAGE:\033[0m eiota clone <repo>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter clone <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Clone the defined repository <repo>.')
     elif cmd == 'ls':
-        print('\033[1;33mUSAGE:\033[0m eiota ls', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter ls', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m List every repository of the user.')
     elif cmd == 'create':
-        print('\033[1;33mUSAGE:\033[0m eiota create <repo>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter create <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Create a new repository <repo>.')
     elif cmd == 'new':
-        print('\033[1;33mUSAGE:\033[0m eiota new <repo>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter new <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Create a new repository <repo> with the default Epitech configuration.')
     elif cmd == 'rm':
-        print('\033[1;33mUSAGE:\033[0m eiota rm <repo>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter rm <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Remove a repository <repo>.')
     elif cmd == 'info':
-        print('\033[1;33mUSAGE:\033[0m eiota info <repo>', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter info <repo>', end='\n\n')
         print('\033[1;33mDESCRIPTION:\033[0m Display repository informations.')
     elif cmd == 'sshkey':
-        print('\033[1;33mUSAGE:\033[0m eiota ' + cmd + ' [command] arguments...', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter ' + cmd + ' [command] arguments...', end='\n\n')
         print('\033[1;33mCOMMANDS:\033[0m')
         print('    list               - List ssh keys')
         print('    upload <filename>  - Upload ssh key from a file')
         print('    rm <key name>      - Set repository ACLs')
     else:
-        print('\033[0;32mv' + EIOTA_VERSION + '\033[0m', end='\n\n')
-        print('\033[1;33mUSAGE:\033[0m eiota [command] arguments...', end='\n\n')
+        print('\033[0;32mv' + BLIHBETTER_VERSION + '\033[0m', end='\n\n')
+        print('\033[1;33mUSAGE:\033[0m blihbetter [command] arguments...', end='\n\n')
         print('\033[1;33mCOMMANDS:\033[0m')
         print('    help               - Display this help message')
         print('    config             - Setup the config file')
@@ -313,7 +312,7 @@ if __name__ == "__main__":
         elif sys.argv[1] == 'whoami':
             print_logo()
             print('\n\033[1;33mHello\033[1;37m', user_config[USER_IDENTIFIER], '\033[0m')
-            print('\033[2mYou can type \'eiota config info\' to get more informations\033[0m')
+            print('\033[2mYou can type \'blihbetter config info\' to get more informations\033[0m')
         else:
             usage()
     elif len(sys.argv) == 3:

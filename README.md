@@ -1,27 +1,27 @@
-# eIOTA
+# blihbetter
 A simple python script to simplify BLIH usage for Epitech students.
 
-[![License](https://img.shields.io/github/license/mrCaelum/eiota)](http://badges.mit-license.org)
-[![AUR](https://img.shields.io/aur/version/eiota)](https://aur.archlinux.org/packages/eiota/)
+[![License](https://img.shields.io/github/license/mrCaelum/blihbetter)](http://badges.mit-license.org)
+[![AUR](https://img.shields.io/aur/version/blihbetter)](https://aur.archlinux.org/packages/blihbetter/)
 
 ## Installation
 
 ### Archlinux
 
-###### You can install [eiota](https://aur.archlinux.org/packages/eiota/) from the [AUR](https://aur.archlinux.org/):
+###### You can install [blihbetter](https://aur.archlinux.org/packages/blihbetter/) from the [AUR](https://aur.archlinux.org/):
 ```
-yay -S eiota
+yay -S blihbetter
 ```
 
 ### Others
 
-###### The install script will copy eiota in `~/.local/bin`
+###### The install script will copy blihbetter in `~/.local/bin`
 ```
 chmod +x install.sh
 ./install.sh
 ```
 
-###### You can also run it as root to copy eiota in `/usr/bin`
+###### You can also run it as root to copy blihbetter in `/usr/bin`
 ```
 chmod +x install.sh
 sudo ./install.sh
@@ -30,7 +30,7 @@ sudo ./install.sh
 ## Usage
 
 ```
-eiota [command] arguments...
+blihbetter [command] arguments...
 ```
 
 #### COMMANDS:
