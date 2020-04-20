@@ -46,6 +46,19 @@ blihbetter [command] arguments...
 - `acl (get/set)`      - Edit the repository ACLs
 - `sshkey (add/ls/rm)` - Edit the repository ACLs
 
+#### CONFIGURATION:
+The default configuration is store in `~/.config/epitech/config.json` and look like that:
+```json
+{
+  "user": "[firstname].[lastname]@epitech.eu",
+  "token": "[token]",
+  "git_url": "git@git.epitech.eu",
+  "blih_url": "https://blih.epitech.eu/",
+  "blih_user_agent": "blih-1.7-win"
+}
+```
+You can easily create a configuration file with `blihbetter config` command.
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
